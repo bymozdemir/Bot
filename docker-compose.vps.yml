@@ -1,0 +1,12 @@
+# VPS: panel SADECE loopback'e acilir; internete HTTPS reverse proxy (Caddy/nginx) ile cikilir.
+# Eskiden "8787:8787" portu tum arayuzlere duz HTTP aciyor ve TRUST_PROXY=true ile
+# X-Forwarded-For taklit edilerek giris hiz siniri asilabiliyordu.
+services:
+  bot:
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0        # konteyner ICINDE; dis dunyaya degil, yalniz yukaridaki loopback'e yayinlanir
+      PORT: 8787
+      TRUST_PROXY: "true"  # yalniz ayni makinedeki guvenilir reverse proxy icin

@@ -1,0 +1,40 @@
+{
+  "name": "al-sat-bot",
+  "version": "2.2.0",
+  "description": "Paper-first trading bot with explicit exchange-specific live-trading opt-in, order safety guards, recovery and risk controls.",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "setup": "node scripts/start.js --setup",
+    "start:direct": "node server.js",
+    "test": "node scripts/runTests.js",
+    "backtest": "node backtest.js",
+    "preflight": "node scripts/offlinePreflight.js",
+    "test:clock": "node scripts/testClock.js",
+    "api:preflight": "node scripts/apiPreflight.js",
+    "scan": "node src/backtest/strategyScanner.js",
+    "walkforward": "node walkForwardTrend.js",
+    "auth:setup": "node scripts/setup-auth.js",
+    "auth:check": "node scripts/check-auth.js",
+    "net:check": "node scripts/netCheck.js",
+    "test:fuzz": "node scripts/paperFuzz.js",
+    "test:policy-fuzz": "node scripts/portfolioPolicyFuzz.js",
+    "test:batched": "node scripts/runTestsBatched.js",
+    "test:userdata-races-stress": "node scripts/stressUserDataStreamRaces.js",
+    "test:server-integration": "node --test test/serverIntegration.test.js",
+    "testnet:preflight": "node scripts/testnetPreflight.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "undici": "^6.29.0"
+  }
+}

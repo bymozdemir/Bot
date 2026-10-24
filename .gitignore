@@ -1,0 +1,28 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Runtime state, account data, encrypted credentials and logs
+data/
+logs/
+*.log
+
+# Dependencies and generated artifacts
+node_modules/
+coverage/
+.nyc_output/
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# Gizli bilgiler ve çalışma verileri
+.env
+.env.*
+!.env.example
+data/
+logs/
+*.log
+node_modules/
+.DS_Store

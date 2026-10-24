@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AL-SAT Paneli</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header>
+  <div class="headerTop">
+    <h1>AL-SAT Paneli</h1>
+    <section class="modeSelector" id="modeCard" aria-label="Çalışma modu">
+      <div class="modeSwitchRow">
+        <span id="paperModeLabel" class="modeLabel active">PAPER</span>
+        <button type="button" id="modeSwitch" class="modeSwitch paper" role="switch" aria-checked="false" aria-label="Çalışma modunu PAPER ve LIVE arasında değiştir" title="Çalışma modunu değiştir">
+          <span class="modeThumb" aria-hidden="true"></span>
+        </button>
+        <span id="liveModeLabel" class="modeLabel">LIVE</span>
+      </div>
+      <p id="modeHint" class="modeHint">Gerçek veri · sanal emir</p>
+    </section>
+  </div>
+  <div id="liveConfirm" class="liveConfirm" style="display:none"><b>⚠️ Canlı işlem modu</b><p>Bu mod gerçek para ile emir gönderebilir. Bot durdurulmadan mod değiştirilemez. API anahtarı, trade yetkisi ve güvenlik kontrolleri tamamlanmadan canlı motor başlatılamaz.</p><label class="check"><input type="checkbox" id="liveAck"> Gerçek para ile işlem yapılacağını anlıyorum.</label><button type="button" id="liveConfirmBtn" class="danger" disabled>Onayı tamamla ve kontrolleri çalıştır</button><div id="liveConfirmStatus" class="mu" aria-live="polite"></div></div>
+  <div class="statusRow">
+    <span id="modeBadge" class="badge on">KAĞIT</span>
+    <span id="st" class="badge">● DURDU</span>
+    <span id="wsSt" class="badge mu">bağlantı yok</span>
+  </div>
+  <nav class="tabBar" role="tablist" aria-label="Panel bölümleri">
+    <button type="button" class="tabBtn" role="tab" id="tabBtn-live" data-tab="live" aria-controls="tab-live" aria-selected="true">📊 Canlı</button>
+    <button type="button" class="tabBtn" role="tab" id="tabBtn-settings" data-tab="settings" aria-controls="tab-settings" aria-selected="false" tabindex="-1">⚙️ Ayarlar</button>
+    <button type="button" class="tabBtn" role="tab" id="tabBtn-records" data-tab="records" aria-controls="tab-records" aria-selected="false" tabindex="-1">📜 Kayıtlar</button>
+  </nav>
+</header><p class="note" id="modeNote">Bu sürüm <b>KAĞIT İŞLEM</b> modudur: gerçek borsa fiyatlarını okur, emirleri <b>simüle eder</b>. Gerçek para hareket etmez.</p>
+
+<div id="killBanner" class="killBox" style="display:none">
+  <b>🛑 Kill switch devrede</b>
+  <div id="killText" class="mu"></div>
+  <button id="ackKillBtn" class="danger">Kilidi kaldır</button>
+</div>
+
+<div class="g tabPanel" id="tab-live" role="tabpanel" aria-labelledby="tabBtn-live" data-tab="live">
+
+  <section class="c">
+    <h2>Kontrol</h2>
+    <div class="st3">
+      <div><div class="mu">Toplam bakiye (eşdeğer)</div><div class="big" id="eq">-</div></div>
+      <div><div class="mu">Günlük K/Z</div><div class="big" id="dp">-</div></div>
+      <div><div class="mu">Açık pozisyon</div><div class="big" id="op">0</div></div>
+    </div>
+    <button id="startBtn">Başlat</button>
+    <button id="stopBtn" class="s">Durdur</button>
+    <button id="resetBtn" class="danger">Sıfırla (tüm geçmişi siler)</button>
+  </section>
+
+
+  <section class="c" id="liveCard" style="display:none">
+    <h2>Canlı durum (gerçek hesap)</h2>
+    <div id="liveGrid" class="perfGrid"></div>
+    <div id="livePos"></div>
+    <p class="mu" id="liveNote"></p><button id="preflightBtn" class="s">Canlı ön kontrolü çalıştır</button><div id="preflightBox" class="mu"></div>
+  </section>
+
+  <section class="c">
+    <h2>Performans</h2>
+    <div id="perfGrid" class="perfGrid"></div>
+    <p class="mu" id="perfNote"></p>
+    <a id="csvLink" href="/api/trades.csv" download="islemler.csv" class="linkBtn">İşlemleri CSV indir</a>
+  </section>
+
+  <section class="c w">
+    <h2>Grafik + teknik analiz</h2>
+    <div class="chartBar">
+      <select id="chartSym" aria-label="Parite"></select>
+      <select id="chartTf" aria-label="Mum aralığı">
+        <option value="1m">1 dk</option><option value="3m">3 dk</option><option value="5m">5 dk</option><option value="15m">15 dk</option><option value="30m">30 dk</option><option value="1h">1 saat</option><option value="4h">4 saat</option>
+      </select>
+      <select id="chartBars" aria-label="Mum sayısı">
+        <option value="60">60 mum</option><option value="120" selected>120 mum</option><option value="240">240 mum</option>
+      </select>
+    </div>
+    <canvas id="chart" aria-label="Mum grafiği"></canvas>
+    <div id="chartInfo" class="mu">Bir muma dokun: açılış/yüksek/düşük/kapanış burada görünür.</div>
+    <div id="indicatorBox" class="indicatorGrid"></div>
+    <div class="mu">▲ alım · ▼ satım · EMA20/50 · kesik çizgiler: giriş/stop</div>
+  </section>
+
+  <section class="c w">
+    <details class="fold" id="fold-risk" data-default="closed" ><summary><h2>Risk merkezi</h2></summary><div class="foldBody">
+    <div id="riskGrid" class="riskGrid"></div>
+    <div id="riskWarnings" class="mu"></div>
+  </div></details></section>
+
+  <section class="c w">
+    <h2>Açık pozisyonlar</h2>
+    <div id="posEmpty" class="mu">Açık pozisyon yok</div>
+    <div class="tblWrap">
+      <table id="posTable" style="display:none">
+        <thead><tr><th>Kağıt</th><th>Giriş</th><th>Şu an</th><th>Miktar</th><th>Stop</th><th>K/Z</th></tr></thead>
+        <tbody id="posBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="c w">
+    <details class="fold" id="fold-scan" data-default="closed" ><summary><h2>Piyasa tarayıcı</h2></summary><div class="foldBody">
+    <p class="mu">24s hacme göre likit pariteleri listeler; yön tahmini yapmaz.</p>
+    <button id="scanBtn" class="s">Tara</button>
+    <div class="tblWrap">
+      <table id="scanTable" style="display:none">
+        <thead><tr><th>Kağıt</th><th>Fiyat</th><th>24s değişim</th><th id="scanVolHeader">24s hacim</th><th></th></tr></thead>
+        <tbody id="scanBody"></tbody>
+      </table>
+    </div>
+  </div></details></section>
+
+</div>
+
+<div class="g tabPanel" id="tab-settings" role="tabpanel" aria-labelledby="tabBtn-settings" data-tab="settings" hidden>
+
+  <section class="c w">
+    <h2>Pariteler ve stratejiler</h2>
+    <p class="mu">Satıra ya da ▾ okuna dokun: strateji ve risk ayarları açılır. Yeşil “Pozisyon” = açık pozisyon var, gri = yok.</p>
+    <div id="pairList"></div>
+    <div class="addPairRow">
+      <div>
+        <label for="newSymbol">Yeni parite (örn. AVAX/USDT)</label>
+        <input id="newSymbol" placeholder="AVAX/USDT" autocapitalize="characters" autocomplete="off">
+      </div>
+      <div>
+        <label for="newStrategy">Strateji</label>
+        <select id="newStrategy"></select>
+      </div>
+      <button id="addPairBtn" style="margin-top:8px">Ekle</button>
+    </div>
+  </section>
+
+  <section class="c w">
+    <details class="fold" id="fold-portrisk" data-default="closed" ><summary><h2>Portföy geneli risk ayarları</h2></summary><div class="foldBody">
+    <p class="mu">Tüm pariteler için ortaktır. Parite başına ayarlar parite satırının içindedir.</p>
+    <details class="fold sub" id="fold-risklimits" data-default="open" open><summary>Temel risk limitleri</summary><div class="foldBody">
+      <div class="two">
+        <div><label for="maxPos">Aynı anda maks. pozisyon</label><input id="maxPos" type="number"></div>
+        <div><label for="reservePct">Hiç kullanılmayacak pay (%)</label><input id="reservePct" type="number"></div>
+      </div>
+      <div class="two">
+        <div><label for="dailyLoss">Günlük zarar limiti (%)</label><input id="dailyLoss" type="number"></div>
+        <div><label for="pollSeconds">Kontrol sıklığı (sn)</label><input id="pollSeconds" type="number"></div>
+      </div>
+      <div class="two">
+        <div><label for="killPct">Kill switch: toplam zarar (%) · canlı modda 0 olamaz</label><input id="killPct" type="number" min="0"></div>
+        <div><label for="maxTrade">İşlem başına üst tutar · canlı modda 0 olamaz</label><input id="maxTrade" type="number" min="0"></div>
+      </div>
+      <div class="r"><span>Günlük limitte pozisyonları güvenli kapat (zorunlu)</span><input id="closeOnLoss" class="sw" type="checkbox" checked disabled></div>
+    </div></details>
+    <details class="fold sub" id="fold-papercost" data-default="closed"><summary>Kağıt işlem hesabı</summary><div class="foldBody">
+      <div class="two">
+        <div><label for="startBal">Başlangıç bakiyesi (Sıfırla'da uygulanır)</label><input id="startBal" type="number" min="1"></div>
+        <div></div>
+      </div>
+      <div class="two">
+        <div><label for="feePct">Komisyon (%)</label><input id="feePct" type="number" min="0" step="0.01"></div>
+        <div><label for="slipPct">Kayma (%)</label><input id="slipPct" type="number" min="0" step="0.01"></div>
+      </div>
+    </div></details>
+    <details class="fold sub" id="fold-categories" data-default="closed"><summary>Portföy kategorileri</summary><div class="foldBody">
+      <p class="mu"><b>0</b> = o kategori için sınır yok. Kategori, parite satırı açılınca seçilir.</p>
+      <div class="two">
+        <div><label for="coreMaxPos">Ana: maks. pozisyon</label><input id="coreMaxPos" type="number" min="0"></div>
+        <div><label for="coreCapPct">Ana: maks. sermaye (%)</label><input id="coreCapPct" type="number" min="0" max="100" step="1"></div>
+      </div>
+      <div class="two">
+        <div><label for="specMaxPos">Spekülatif: maks. pozisyon</label><input id="specMaxPos" type="number" min="0"></div>
+        <div><label for="specCapPct">Spekülatif: maks. sermaye (%)</label><input id="specCapPct" type="number" min="0" max="100" step="1"></div>
+      </div>
+    </div></details>
+    <button id="saveSettings">Kaydet</button>
+  </div></details></section>
+
+  <section class="c w">
+    <details class="fold" id="fold-tf" data-default="closed" ><summary><h2>Mum aralığı seçim tablosu</h2></summary><div class="foldBody">
+    <p class="mu">1-3-5 dk mumlar yalnızca Agresif Kırılım + paper modda çalışır; komisyon+kayma (~%0.3) kısa mumlarda kârı yiyebilir.</p>
+    <div class="tblWrap"><table><thead><tr><th>Aralık</th><th>Agresif</th><th>Normal</th><th>Canlı</th><th>Azami kontrol</th></tr></thead><tbody id="tfTableBody"></tbody></table></div>
+  </div></details></section>
+
+  <section class="c">
+    <details class="fold" id="fold-exchange" data-default="closed" ><summary><h2>Borsa ve API anahtarı</h2></summary><div class="foldBody">
+    <label for="exSel">Aktif borsa</label>
+    <select id="exSel"></select>
+    <p class="mu">Açık pozisyon varken borsa değiştirilemez; kasa birimi uymayan pariteler pasife alınır.</p>
+
+    <div id="vaultBox"></div>
+  </div></details></section>
+
+  <section class="c">
+    <details class="fold" id="fold-notify" data-default="closed" ><summary><h2>Bildirimler</h2></summary><div class="foldBody">
+    <div id="notifyBox" class="mu"></div>
+    <button id="notifyTestBtn" class="s">Test bildirimi gönder</button>
+  </div></details></section>
+
+</div>
+
+<div class="g tabPanel" id="tab-records" role="tabpanel" aria-labelledby="tabBtn-records" data-tab="records" hidden>
+
+  <section class="c w">
+    <h2>Son işlemler</h2>
+    <div id="tradeEmpty" class="mu">Henüz işlem yok</div>
+    <div class="tblWrap">
+      <table id="tradeTable" style="display:none">
+        <thead><tr><th>Kağıt</th><th>Neden</th><th>Giriş→Çıkış</th><th>K/Z</th><th>Saat</th></tr></thead>
+        <tbody id="tradeBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="c w">
+    <h2>Log kayıtları</h2>
+    <div id="log"></div>
+  </section>
+
+  <section class="c w">
+    <details class="fold" id="fold-backtest" data-default="closed" ><summary><h2>Backtest / strateji doğrulama</h2></summary><div class="foldBody">
+    <div class="two">
+      <div><label>Parite</label><select id="btSymbol"></select></div>
+      <div><label>Mum</label><select id="btTf"><option>1m</option><option>3m</option><option>5m</option><option>15m</option><option>30m</option><option selected>1h</option><option>4h</option></select></div>
+    </div>
+    <div class="two">
+      <div><label>Strateji</label><select id="btStrategy"></select></div>
+      <div><label>Başlangıç sermayesi</label><input id="btCapital" type="number" value="1000" min="1"></div>
+    </div>
+    <button id="btRun">Hızlı backtest çalıştır</button>
+    <div id="btResult" class="backtestResult mu">Henüz çalıştırılmadı.</div>
+  </div></details></section>
+
+</div>
+<script src="decision-view.js"></script>
+<script src="app.js"></script>
+<script src="tabs.js"></script>
+</body></html>

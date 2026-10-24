@@ -1,0 +1,25 @@
+# KULLANICI servisi (root gerekmez): ~/.config/systemd/user/crypto-bot.service olarak kopyala,
+#   systemctl --user daemon-reload && systemctl --user enable --now crypto-bot
+#   loginctl enable-linger $USER   # oturum kapaninca da calissin
+# Sandbox direktiflerinin cogu kullanici modunda calismaz; guclu izolasyon icin sistem servisini (crypto-bot.service) tercih et.
+[Unit]
+Description=AL-SAT Crypto Bot (kullanici)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/crypto-bot
+EnvironmentFile=%h/crypto-bot/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node %h/crypto-bot/server.js
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

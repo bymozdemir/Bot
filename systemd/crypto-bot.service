@@ -1,0 +1,57 @@
+# SISTEM servisi (root olarak kurulur, bot ise ayricaliksiz kullanici olarak calisir).
+# Kurulum:
+#   sudo useradd --system --home /opt/crypto-bot --shell /usr/sbin/nologin cryptobot
+#   sudo cp -r . /opt/crypto-bot && sudo chown -R cryptobot:cryptobot /opt/crypto-bot
+#   sudo chmod 600 /opt/crypto-bot/.env
+#   sudo cp systemd/crypto-bot.service /etc/systemd/system/ && sudo systemctl enable --now crypto-bot
+# Sandbox direktifleri bu ortamda (systemd yok) CALISTIRILARAK test EDILEMEDI: ilk kurulumda `systemctl status crypto-bot` ve
+# `journalctl -u crypto-bot -n 50` ile dogrula; sorun cikarsa once SystemCallFilter/ProtectSystem satirlarini yorumla.
+# NOT: Eski surumdeki "User=%i" bir sablon olmayan unit'te bos genisler ve servis ROOT olarak calisirdi.
+[Unit]
+Description=AL-SAT Crypto Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cryptobot
+Group=cryptobot
+WorkingDirectory=/opt/crypto-bot
+EnvironmentFile=/opt/crypto-bot/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/crypto-bot/server.js
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+UMask=0077
+
+# Sertlestirme
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/crypto-bot/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+# Node acilista setrlimit (@resources) cagirir: o grubu ENGELLEME. Engellenen syscall sureci oldurmesin diye EPERM dondurulur.
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+MemoryMax=768M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+test/dca.test.js
+test/decisionView.test.js
+test/engine.test.js
+test/engine2.test.js
+test/exchangeCapabilitySafety.test.js
+test/exchangeReadonlyAudit.test.js
+test/exchangeRuleSemanticsStep5.test.js
+test/exchangeSafety.test.js
+test/exchangeTickerSchema.test.js
+test/execution.test.js
+test/fastTimeframe.test.js
+test/finalAudit.test.js
+test/finalHardening.test.js
+test/financialUnitsAndBuyHold.test.js
+test/firstRun.test.js

@@ -1,0 +1,16 @@
+test/accountingModelChecker.test.js
+test/aggressiveBreakout.test.js
+test/auditFixes20261017.test.js
+test/auditFixesStage8.test.js
+test/auth.test.js
+test/backtest.cli.test.js
+test/backtest.test.js
+test/backtestData.test.js
+test/backtestNoLookahead.test.js
+test/binancetr.test.js
+test/btcturk.test.js
+test/cancelFillRace.test.js
+test/chaosCampaign.test.js
+test/chaosRecovery.test.js
+test/dailySummary.test.js
+test/binanceTestnetOptIn.test.js
